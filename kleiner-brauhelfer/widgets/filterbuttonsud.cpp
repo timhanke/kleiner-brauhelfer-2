@@ -17,8 +17,6 @@
 extern Brauhelfer* bh;
 extern Settings* gSettings;
 
-static const QString kFilterAllPlaceholder = QStringLiteral("*");
-
 FilterButtonSud::FilterButtonSud(QWidget *parent) :
     ToolButton(parent),
     mModel(nullptr),
@@ -111,9 +109,10 @@ void FilterButtonSud::setModel(ProxyModelSud* model, Items items)
     }
     if (items.testFlag(Item::Kategorie))
     {
+        const QString filterAllText = tr("Alle");
         layout->addWidget(new QLabel(tr("Kategorie"), widget), layout->rowCount(), 0);
         mComboBoxKategorie = new ComboBox(this);
-        mComboBoxKategorie->addItem(kFilterAllPlaceholder);
+        mComboBoxKategorie->addItem(filterAllText);
         for (int i = 0; i < bh->modelKategorien()->rowCount(); i++)
             mComboBoxKategorie->addItem(bh->modelKategorien()->data(i, ModelKategorien::ColName).toString());
         layout->addWidget(mComboBoxKategorie, layout->rowCount()-1, 1);
@@ -127,9 +126,10 @@ void FilterButtonSud::setModel(ProxyModelSud* model, Items items)
     }
     if (items.testFlag(Item::Anlage))
     {
+        const QString filterAllText = tr("Alle");
         layout->addWidget(new QLabel(tr("Anlage"), widget), layout->rowCount(), 0);
         mComboBoxAnlage = new ComboBox(this);
-        mComboBoxAnlage->addItem(kFilterAllPlaceholder);
+        mComboBoxAnlage->addItem(filterAllText);
         for (int i = 0; i < bh->modelAusruestung()->rowCount(); i++)
             mComboBoxAnlage->addItem(bh->modelAusruestung()->data(i, ModelAusruestung::ColName).toString());
         layout->addWidget(mComboBoxAnlage, layout->rowCount()-1, 1);
@@ -230,13 +230,13 @@ void FilterButtonSud::setMerkliste(bool value)
 
 void FilterButtonSud::setKategorie(const QString& value)
 {
-    mModel->setFilterKategorie(value == kFilterAllPlaceholder ? QString() : value);
+    mModel->setFilterKategorie(value == tr("Alle") ? QString() : value);
     updateChecked();
 }
 
 void FilterButtonSud::setAnlage(const QString& value)
 {
-    mModel->setFilterAnlage(value == kFilterAllPlaceholder ? QString() : value);
+    mModel->setFilterAnlage(value == tr("Alle") ? QString() : value);
     updateChecked();
 }
 
@@ -282,9 +282,9 @@ void FilterButtonSud::updateWidgets()
     if (mCheckBoxMerkliste)
         mCheckBoxMerkliste->setChecked(mModel->filterMerkliste());
     if (mComboBoxKategorie)
-        mComboBoxKategorie->setCurrentText(mModel->filterKategorie().isEmpty() ? kFilterAllPlaceholder : mModel->filterKategorie());
+        mComboBoxKategorie->setCurrentText(mModel->filterKategorie().isEmpty() ? tr("Alle") : mModel->filterKategorie());
     if (mComboBoxAnlage)
-        mComboBoxAnlage->setCurrentText(mModel->filterAnlage().isEmpty() ? kFilterAllPlaceholder : mModel->filterAnlage());
+        mComboBoxAnlage->setCurrentText(mModel->filterAnlage().isEmpty() ? tr("Alle") : mModel->filterAnlage());
     if (mCheckBoxDatum)
         mCheckBoxDatum->setChecked(mModel->filterDate());
     if (mDateEditMin)
