@@ -2,6 +2,7 @@
 #define FILTERBUTTONSUD_H
 
 #include "toolbutton.h"
+#include <QMouseEvent>
 
 class ProxyModelSud;
 class CheckBox;
@@ -44,6 +45,7 @@ private slots:
 
 private:
     void updateChecked();
+    void mousePressEvent(QMouseEvent *event) Q_DECL_OVERRIDE;
 
 private:
     ProxyModelSud* mModel;

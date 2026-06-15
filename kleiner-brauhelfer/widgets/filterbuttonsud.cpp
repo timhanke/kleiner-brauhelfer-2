@@ -4,7 +4,10 @@
 #include <QLabel>
 #include <QWidgetAction>
 #include <QMenu>
+#include <QMouseEvent>
 #include "proxymodelsud.h"
+#include "modelkategorien.h"
+#include "modelausruestung.h"
 #include "checkbox.h"
 #include "combobox.h"
 #include "dateedit.h"
@@ -13,6 +16,8 @@
 
 extern Brauhelfer* bh;
 extern Settings* gSettings;
+
+static const QString kFilterAllPlaceholder = QStringLiteral("*");
 
 FilterButtonSud::FilterButtonSud(QWidget *parent) :
     ToolButton(parent),
@@ -30,6 +35,7 @@ FilterButtonSud::FilterButtonSud(QWidget *parent) :
     mDateEditMax(nullptr)
 {
     setCheckable(true);
+    setProperty("filterHighlight", true);
 }
 
 ProxyModelSud* FilterButtonSud::model() const
@@ -107,10 +113,9 @@ void FilterButtonSud::setModel(ProxyModelSud* model, Items items)
     {
         layout->addWidget(new QLabel(tr("Kategorie"), widget), layout->rowCount(), 0);
         mComboBoxKategorie = new ComboBox(this);
-        ProxyModel* proxy = new ProxyModel(this);
-        proxy->setSourceModel(bh->modelKategorien());
-        mComboBoxKategorie->setModel(proxy);
-        mComboBoxKategorie->setModelColumn(ModelKategorien::ColName);
+        mComboBoxKategorie->addItem(kFilterAllPlaceholder);
+        for (int i = 0; i < bh->modelKategorien()->rowCount(); i++)
+            mComboBoxKategorie->addItem(bh->modelKategorien()->data(i, ModelKategorien::ColName).toString());
         layout->addWidget(mComboBoxKategorie, layout->rowCount()-1, 1);
         connect(mComboBoxKategorie, &QComboBox::currentTextChanged, this, &FilterButtonSud::setKategorie);
         line = new QFrame(this);
@@ -124,7 +129,7 @@ void FilterButtonSud::setModel(ProxyModelSud* model, Items items)
     {
         layout->addWidget(new QLabel(tr("Anlage"), widget), layout->rowCount(), 0);
         mComboBoxAnlage = new ComboBox(this);
-        mComboBoxAnlage->addItem("");
+        mComboBoxAnlage->addItem(kFilterAllPlaceholder);
         for (int i = 0; i < bh->modelAusruestung()->rowCount(); i++)
             mComboBoxAnlage->addItem(bh->modelAusruestung()->data(i, ModelAusruestung::ColName).toString());
         layout->addWidget(mComboBoxAnlage, layout->rowCount()-1, 1);
@@ -157,6 +162,18 @@ void FilterButtonSud::setModel(ProxyModelSud* model, Items items)
 void FilterButtonSud::clear()
 {
     mModel->clearFilter();
+    updateWidgets();
+}
+
+void FilterButtonSud::mousePressEvent(QMouseEvent *event)
+{
+    if (event && event->button() == Qt::RightButton)
+    {
+        clear();
+        event->accept();
+        return;
+    }
+    ToolButton::mousePressEvent(event);
 }
 
 void FilterButtonSud::setStatusAlle(bool value)
@@ -213,13 +230,13 @@ void FilterButtonSud::setMerkliste(bool value)
 
 void FilterButtonSud::setKategorie(const QString& value)
 {
-    mModel->setFilterKategorie(value);
+    mModel->setFilterKategorie(value == kFilterAllPlaceholder ? QString() : value);
     updateChecked();
 }
 
 void FilterButtonSud::setAnlage(const QString& value)
 {
-    mModel->setFilterAnlage(value);
+    mModel->setFilterAnlage(value == kFilterAllPlaceholder ? QString() : value);
     updateChecked();
 }
 
@@ -265,9 +282,9 @@ void FilterButtonSud::updateWidgets()
     if (mCheckBoxMerkliste)
         mCheckBoxMerkliste->setChecked(mModel->filterMerkliste());
     if (mComboBoxKategorie)
-        mComboBoxKategorie->setCurrentText(mModel->filterKategorie());
+        mComboBoxKategorie->setCurrentText(mModel->filterKategorie().isEmpty() ? kFilterAllPlaceholder : mModel->filterKategorie());
     if (mComboBoxAnlage)
-        mComboBoxAnlage->setCurrentText(mModel->filterAnlage());
+        mComboBoxAnlage->setCurrentText(mModel->filterAnlage().isEmpty() ? kFilterAllPlaceholder : mModel->filterAnlage());
     if (mCheckBoxDatum)
         mCheckBoxDatum->setChecked(mModel->filterDate());
     if (mDateEditMin)
@@ -294,5 +311,7 @@ void FilterButtonSud::updateChecked()
         checked = true;
     if (!checked && mModel->filterDate())
         checked = true;
+    setProperty("filterHighlightActive", checked);
+    updatePalette();
     setChecked(checked);
 }

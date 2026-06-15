@@ -11,7 +11,7 @@ public:
     explicit ToolButton(QWidget *parent = nullptr);
     void addChangeDecorator();
     void setError(bool e);
-private:
+protected:
     bool event(QEvent *event) Q_DECL_OVERRIDE;
     void updatePalette();
 private:
