@@ -19,7 +19,6 @@ FilterButtonLager::FilterButtonLager(QWidget *parent) :
     mRadioButtonInGebrauch(nullptr)
 {
     setCheckable(true);
-    setProperty("filterHighlight", true);
 
     QWidget* widget = new QWidget(this);
     widget->setLayout(new QVBoxLayout(widget));
@@ -77,11 +76,10 @@ void FilterButtonLager::clear()
 
 void FilterButtonLager::mousePressEvent(QMouseEvent *event)
 {
-    if (event && event->button() == Qt::RightButton)
+    if (event->button() != Qt::LeftButton)
     {
         clear();
         event->accept();
-        return;
     }
     ToolButton::mousePressEvent(event);
 }
@@ -115,7 +113,5 @@ void FilterButtonLager::updateChecked()
 {
     if (!mModel)
         return;
-    setProperty("filterHighlightActive", mModel->filter() != ProxyModelRohstoff::Alle);
-    updatePalette();
     setChecked(mModel->filter() != ProxyModelRohstoff::Alle);
 }

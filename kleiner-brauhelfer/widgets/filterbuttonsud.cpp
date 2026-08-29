@@ -4,13 +4,11 @@
 #include <QLabel>
 #include <QWidgetAction>
 #include <QMenu>
-#include <QMouseEvent>
 #include "proxymodelsud.h"
-#include "modelkategorien.h"
-#include "modelausruestung.h"
 #include "checkbox.h"
 #include "combobox.h"
 #include "dateedit.h"
+#include "pushbutton.h"
 #include "brauhelfer.h"
 #include "settings.h"
 
@@ -30,10 +28,10 @@ FilterButtonSud::FilterButtonSud(QWidget *parent) :
     mComboBoxAnlage(nullptr),
     mCheckBoxDatum(nullptr),
     mDateEditMin(nullptr),
-    mDateEditMax(nullptr)
+    mDateEditMax(nullptr),
+    mButtonClear(nullptr)
 {
     setCheckable(true);
-    setProperty("filterHighlight", true);
 }
 
 ProxyModelSud* FilterButtonSud::model() const
@@ -84,15 +82,15 @@ void FilterButtonSud::setModel(ProxyModelSud* model, Items items)
         mCheckBoxAusgetrunken->setDefaultPalette(pal);
         layout->addWidget(mCheckBoxAusgetrunken, layout->rowCount(), 1);
         connect(mCheckBoxAusgetrunken, &QAbstractButton::clicked, this, &FilterButtonSud::setStatus);
+    }
+    if (items.testFlag(Item::Merkliste))
+    {
         line = new QFrame(this);
         line->setFrameShape(QFrame::HLine);
         line->setFrameShadow(QFrame::Sunken);
         line->setLineWidth(0);
         line->setMidLineWidth(1);
         layout->addWidget(line, layout->rowCount(), 0, 1, 2);
-    }
-    if (items.testFlag(Item::Merkliste))
-    {
         QPalette pal = palette();
         layout->addWidget(new QLabel(tr("Merkliste"), widget), layout->rowCount(), 0);
         mCheckBoxMerkliste = new CheckBox("", widget);
@@ -100,49 +98,51 @@ void FilterButtonSud::setModel(ProxyModelSud* model, Items items)
         mCheckBoxMerkliste->setDefaultPalette(pal);
         layout->addWidget(mCheckBoxMerkliste, layout->rowCount()-1, 1);
         connect(mCheckBoxMerkliste, &QAbstractButton::clicked, this, &FilterButtonSud::setMerkliste);
-        line = new QFrame(this);
-        line->setFrameShape(QFrame::HLine);
-        line->setFrameShadow(QFrame::Sunken);
-        line->setLineWidth(0);
-        line->setMidLineWidth(1);
-        layout->addWidget(line, layout->rowCount(), 0, 1, 2);
     }
     if (items.testFlag(Item::Kategorie))
     {
-        const QString filterAllText = tr("Alle");
-        layout->addWidget(new QLabel(tr("Kategorie"), widget), layout->rowCount(), 0);
-        mComboBoxKategorie = new ComboBox(this);
-        mComboBoxKategorie->addItem(filterAllText);
-        for (int i = 0; i < bh->modelKategorien()->rowCount(); i++)
-            mComboBoxKategorie->addItem(bh->modelKategorien()->data(i, ModelKategorien::ColName).toString());
-        layout->addWidget(mComboBoxKategorie, layout->rowCount()-1, 1);
-        connect(mComboBoxKategorie, &QComboBox::currentTextChanged, this, &FilterButtonSud::setKategorie);
         line = new QFrame(this);
         line->setFrameShape(QFrame::HLine);
         line->setFrameShadow(QFrame::Sunken);
         line->setLineWidth(0);
         line->setMidLineWidth(1);
         layout->addWidget(line, layout->rowCount(), 0, 1, 2);
+        layout->addWidget(new QLabel(tr("Kategorie"), widget), layout->rowCount(), 0);
+        mComboBoxKategorie = new ComboBox(this);
+        mComboBoxKategorie->addItem(tr("Alle"));
+        for (int i = 0; i < bh->modelKategorien()->rowCount(); i++)
+        {
+            QString value = bh->modelKategorien()->data(i, ModelKategorien::ColName).toString();
+            if (!value.isEmpty())
+                mComboBoxKategorie->addItem(value);
+        }
+        layout->addWidget(mComboBoxKategorie, layout->rowCount()-1, 1);
+        connect(mComboBoxKategorie, &QComboBox::currentTextChanged, this, &FilterButtonSud::setKategorie);
     }
     if (items.testFlag(Item::Anlage))
     {
-        const QString filterAllText = tr("Alle");
+        line = new QFrame(this);
+        line->setFrameShape(QFrame::HLine);
+        line->setFrameShadow(QFrame::Sunken);
+        line->setLineWidth(0);
+        line->setMidLineWidth(1);
+        layout->addWidget(line, layout->rowCount(), 0, 1, 2);
         layout->addWidget(new QLabel(tr("Anlage"), widget), layout->rowCount(), 0);
         mComboBoxAnlage = new ComboBox(this);
-        mComboBoxAnlage->addItem(filterAllText);
+        mComboBoxAnlage->addItem(tr("Alle"));
         for (int i = 0; i < bh->modelAusruestung()->rowCount(); i++)
             mComboBoxAnlage->addItem(bh->modelAusruestung()->data(i, ModelAusruestung::ColName).toString());
         layout->addWidget(mComboBoxAnlage, layout->rowCount()-1, 1);
         connect(mComboBoxAnlage, &QComboBox::currentTextChanged, this, &FilterButtonSud::setAnlage);
+    }
+    if (items.testFlag(Item::Braudatum))
+    {
         line = new QFrame(this);
         line->setFrameShape(QFrame::HLine);
         line->setFrameShadow(QFrame::Sunken);
         line->setLineWidth(0);
         line->setMidLineWidth(1);
         layout->addWidget(line, layout->rowCount(), 0, 1, 2);
-    }
-    if (items.testFlag(Item::Braudatum))
-    {
         layout->addWidget(new QLabel(tr("Gebraut"), widget), layout->rowCount(), 0);
         mCheckBoxDatum = new CheckBox(tr("zwischen"), widget);
         layout->addWidget(mCheckBoxDatum, layout->rowCount()-1, 1);
@@ -154,6 +154,18 @@ void FilterButtonSud::setModel(ProxyModelSud* model, Items items)
         mDateEditMax = new DateEdit(widget);
         layout->addWidget(mDateEditMax, layout->rowCount(), 1);
         connect(mDateEditMax, &QDateEdit::dateChanged, this, &FilterButtonSud::setMaxdate);
+    }
+    if (items.testFlag(Item::Clear))
+    {
+        line = new QFrame(this);
+        line->setFrameShape(QFrame::HLine);
+        line->setFrameShadow(QFrame::Sunken);
+        line->setLineWidth(0);
+        line->setMidLineWidth(1);
+        layout->addWidget(line, layout->rowCount(), 0, 1, 2);
+        mButtonClear = new PushButton(tr("Zurücksetzen"), widget);
+        layout->addWidget(mButtonClear, layout->rowCount(), 0, 1, 2);
+        connect(mButtonClear, &QAbstractButton::clicked, this, &FilterButtonSud::clear);
     }
 
     updateWidgets();
@@ -167,11 +179,10 @@ void FilterButtonSud::clear()
 
 void FilterButtonSud::mousePressEvent(QMouseEvent *event)
 {
-    if (event && event->button() == Qt::RightButton)
+    if (event->button() != Qt::LeftButton)
     {
         clear();
         event->accept();
-        return;
     }
     ToolButton::mousePressEvent(event);
 }
@@ -311,7 +322,5 @@ void FilterButtonSud::updateChecked()
         checked = true;
     if (!checked && mModel->filterDate())
         checked = true;
-    setProperty("filterHighlightActive", checked);
-    updatePalette();
     setChecked(checked);
 }
